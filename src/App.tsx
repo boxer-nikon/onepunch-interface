@@ -5,6 +5,7 @@ import { Header } from './components/Header'
 import { Web3Provider } from './components/Web3Provider'
 
 import './App.css';
+import 'antd/dist/antd.css'
 
 function App() {
   return (
