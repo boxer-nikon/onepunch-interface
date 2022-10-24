@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@ethersproject/contracts": "^5.7.0",
     "@ethersproject/providers": "^5.7.1",
     "@ethersproject/units": "^5.7.0",
     "@openzeppelin/contracts": "^4.7.3",
