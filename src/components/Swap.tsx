@@ -12,6 +12,9 @@ import ERC20ABI from "../abis/ERC20.json";
 import DexLiquidityProviderABI from "../abis/DexLiquidityProvider.json";
 import QuickLiquidityProviderABI from "../abis/QuickLiquidityProvider.json";
 
+import { getSwapGas } from "../utils/gas"
+import { rpcProvider } from "../utils/provider"
+
 const USDT = "";
 const dexLiquidityProviderAddress =
   "0x5C7aC31611C251f4B07adabF5D2095692edf11DE";
@@ -52,7 +55,7 @@ export const Swap = () => {
             library?.getSigner()
           );
     // ensure allowonce elliagle
-    // const fromToken = new Contract(USDT, ERC20ABI);
+    // const fromToken = new Contract(USDT, ERC20ABI, rpcProvider);
     // const allowonce = await fromToken.allowance(
     //   account,
     //   targetContract.address
@@ -61,6 +64,14 @@ export const Swap = () => {
     //   const tx = await fromToken.approve(targetContract.address, MaxInt256);
     //   await tx.wait();
     // }
+    const gas = await getSwapGas({
+      from: account,
+      to: targetContract.address,
+      value: parseEther(`${quoteModel.baseCurrencySize}`).toString(),
+      message: quoteModel.message,
+      signature: quoteModel.sign,
+    })
+    console.log("🚀 ~ file: Swap.tsx ~ line 73 ~ handleConfirm ~ gas", gas)
     await targetContract.swapRequest(quoteModel.message, quoteModel.sign, {
       value:   parseEther(`${quoteModel.baseCurrencySize}`)
     });
@@ -75,7 +86,7 @@ export const Swap = () => {
             baseCurrencySize: fromAmount,
             quoteCurrency: "USDT",
             side: Side.BUY,
-            userOnChainAddress: account || "",
+            userOnChainAddress: account || ""
           }
         : {
             baseCurrency: "BNB",
