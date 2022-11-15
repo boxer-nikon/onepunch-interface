@@ -1,3 +1,5 @@
+import axios from "axios";
+
 export enum Side {
   BUY = "BUY",
   SELL = "SELL",
@@ -5,9 +7,9 @@ export enum Side {
 
 type QuoteParams = {
   baseCurrency: string;
-  baseCurrencySize: string;
+  baseCurrencySize?: string;
   quoteCurrency: string;
-  quoteCurrencySize: string;
+  quoteCurrencySize?: string;
   side: Side;
   userOnChainAddress?: string;
 };
@@ -26,20 +28,27 @@ export type IQuote = {
   side: Side;
   sign: string;
 };
-export const quote = async (params: QuoteParams): Promise<IQuote> => {
-  const res = await fetch("http://10.100.174.55:10357/api/v1/dex/quote", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(params),
-  });
 
-  return res.json()
+const API_HOST = "http://localhost:8080/proxy";
+
+type IResponse = {
+  status: "ERROR" | "OK";
+  data: IQuote;
+};
+
+export const quote = async (params: QuoteParams): Promise<IQuote | null> => {
+  const res = await axios.post<IResponse>(`${API_HOST}/api/v1/dex/quote`, {
+    body: params,
+  });
+  if (res.data.status === "OK") {
+    return res.data.data;
+  }
+
+  return null;
 };
 
 export const getPairs = async () => {
-  return fetch("http://10.100.174.55:10357/api/v1/dex/pairs", {
+  return fetch(`${API_HOST}/api/v1/dex/pairs`, {
     method: "POST",
   });
 };

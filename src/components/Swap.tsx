@@ -2,6 +2,7 @@ import { ChangeEvent, useState, useEffect, useCallback } from "react";
 import { useWeb3React } from "@web3-react/core";
 import type { Web3Provider } from "@ethersproject/providers";
 import { Contract } from "@ethersproject/contracts";
+import { parseEther } from "@ethersproject/units";
 import { MaxInt256 } from "@ethersproject/constants";
 import { Card, Input, Button } from "antd";
 import { ArrowDownOutlined } from "@ant-design/icons";
@@ -13,9 +14,9 @@ import QuickLiquidityProviderABI from "../abis/QuickLiquidityProvider.json";
 
 const USDT = "";
 const dexLiquidityProviderAddress =
-  "0xF17E9322eb6dA7DD39a2FED1B72abC921154759d";
+  "0x5C7aC31611C251f4B07adabF5D2095692edf11DE";
 const quickLiquidityProviderAddress =
-  "0xc817790EAa4e1F058908Eaf90e2a2E92FBb091B4";
+  "0x017580728EB91D6e3F2afc02a92FE7729aA19b71";
 
 export const Swap = () => {
   const [isBase, setIsBase] = useState(true);
@@ -50,20 +51,20 @@ export const Swap = () => {
             DexLiquidityProviderABI,
             library?.getSigner()
           );
-    if (!isBase) {
-      // ensure allowonce elliagle
-      const fromToken = new Contract(USDT, ERC20ABI);
-      const allowonce = await fromToken.allowance(
-        account,
-        targetContract.address
-      );
-      if (!allowonce.gt(fromAmount)) {
-        const tx = await fromToken.approve(targetContract.address, MaxInt256);
-        await tx.wait();
-      }
-    }
-    await targetContract.swapRequest(quoteModel.message, quoteModel.sign);
-  }, [account, fromAmount, library, isBase, quoteModel]);
+    // ensure allowonce elliagle
+    // const fromToken = new Contract(USDT, ERC20ABI);
+    // const allowonce = await fromToken.allowance(
+    //   account,
+    //   targetContract.address
+    // );
+    // if (!allowonce.gt(fromAmount)) {
+    //   const tx = await fromToken.approve(targetContract.address, MaxInt256);
+    //   await tx.wait();
+    // }
+    await targetContract.swapRequest(quoteModel.message, quoteModel.sign, {
+      value:   parseEther(`${quoteModel.baseCurrencySize}`)
+    });
+  }, [account, fromAmount, library, quoteModel]);
 
   useEffect(() => {
     async function rfq() {
@@ -73,21 +74,27 @@ export const Swap = () => {
             baseCurrency: "BNB",
             baseCurrencySize: fromAmount,
             quoteCurrency: "USDT",
-            quoteCurrencySize: "",
             side: Side.BUY,
             userOnChainAddress: account || "",
           }
         : {
             baseCurrency: "BNB",
-            baseCurrencySize: "",
             quoteCurrency: "USDT",
             quoteCurrencySize: toAmount,
             side: Side.SELL,
             userOnChainAddress: account || "",
           };
+      // @ts-ignore ignore
+      if (!account) delete param.userOnChainAddress;
+
       try {
         const quoteRes = await quote(param);
-        setQuoteModel(quoteRes);
+        console.log("🚀 ~ file: Swap.tsx ~ line 91 ~ rfq ~ quoteRes", quoteRes);
+        if (quoteRes) {
+          setFromAmount(quoteRes.baseCurrencySize);
+          setToAmount(quoteRes.quoteCurrencySize);
+          setQuoteModel(quoteRes);
+        }
       } catch (e) {
       } finally {
         setLoading(false);
